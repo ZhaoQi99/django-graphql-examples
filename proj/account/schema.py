@@ -5,6 +5,11 @@ from account.models import User
 
 
 class UserType(DjangoObjectType):
+    today_join = graphene.Boolean()
+
+    def resolve_today_join(self, info):
+        return self.is_today_join()
+
     class Meta:
         model = User
         convert_choices_to_enum = False
