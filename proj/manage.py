@@ -3,6 +3,9 @@
 import os
 import sys
 
+import django
+from django.utils.encoding import force_str
+django.utils.encoding.force_text = force_str
 
 def main():
     """Run administrative tasks."""
