@@ -7,7 +7,7 @@ from account.models import User
 class UserType(DjangoObjectType):
     class Meta:
         model = User
-
+        convert_choices_to_enum = False
 
 class Query(graphene.ObjectType):
     users = graphene.List(UserType)
