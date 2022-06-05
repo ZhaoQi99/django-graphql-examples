@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'graphene_django',
+    'account.apps.AccountConfig',
 ]
 
 MIDDLEWARE = [
@@ -126,3 +127,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 GRAPHENE = {
     'SCHEMA': 'proj.schema.schema'
 }
+
+AUTH_USER_MODEL = 'account.User'
