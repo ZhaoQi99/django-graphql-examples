@@ -1,9 +1,11 @@
 import graphene
 from django import forms
+from graphene import relay
 from graphene_django import DjangoListField
 from graphene_django.forms.mutation import DjangoModelFormMutation
 from graphene_django.rest_framework.mutation import SerializerMutation
 from graphene_django.types import DjangoObjectType
+from graphql_relay import from_global_id
 
 from account.models import Token, User
 from account.serializers import UserSerializer
@@ -24,8 +26,23 @@ class UserType(DjangoObjectType):
         convert_choices_to_enum = False
 
 
+class UserRelayType(UserType):
+
+    class Meta:
+        model = User
+        convert_choices_to_enum = False
+        interfaces = (relay.Node, )
+
+
+class UserConnection(relay.Connection):
+
+    class Meta:
+        node = UserRelayType
+
+
 class UserQuery(graphene.ObjectType):
     users = DjangoListField(UserType)
+    users2 = relay.ConnectionField(UserConnection)
     user_by_name = graphene.Field(UserType, user_name=graphene.String())
 
     def resolve_users(self, info, **kwargs):
@@ -33,6 +50,9 @@ class UserQuery(graphene.ObjectType):
 
     def resolve_user_by_name(self, info, user_name):
         return User.objects.filter(username=user_name).first()
+
+    def resolve_users2(self, info, **kwargs):
+        return User.objects.exclude(username='admin')
 
 
 class TokenType(DjangoObjectType):
@@ -76,8 +96,6 @@ class UserMutation2(DjangoModelFormMutation):
         form_class = UserForm
 
 
-
-
 class UserMutationDRF(SerializerMutation):
 
     class Meta:
@@ -86,10 +104,27 @@ class UserMutationDRF(SerializerMutation):
         lookup_field = 'id'
 
 
+class UserMutationRelay(relay.ClientIDMutation):
+
+    class Input:
+        user_name = graphene.String(required=True)
+        password = graphene.String(required=True)
+        email = graphene.String(required=True)
+
+    user = graphene.Field(UserRelayType)
+
+
+    @classmethod
+    def mutate_and_get_payload(cls, root, info, user_name, password, email,**input):
+        user = User.objects.create_user(user_name, email, password)
+        return UserMutationRelay(user=user)
+
+
 class Mutation(graphene.ObjectType):
     create_user = UserMutation.Field()
     create_user2 = UserMutation2.Field()
     create_user_drf = UserMutationDRF.Field()
+    create_user_relay = UserMutationRelay.Field()
 
 
 class Query(UserQuery, TokenQuery):
