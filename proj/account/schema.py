@@ -1,10 +1,12 @@
-from django import forms
 import graphene
+from django import forms
 from graphene_django import DjangoListField
 from graphene_django.forms.mutation import DjangoModelFormMutation
+from graphene_django.rest_framework.mutation import SerializerMutation
 from graphene_django.types import DjangoObjectType
 
 from account.models import Token, User
+from account.serializers import UserSerializer
 
 
 class UserType(DjangoObjectType):
@@ -74,9 +76,20 @@ class UserMutation2(DjangoModelFormMutation):
         form_class = UserForm
 
 
+
+
+class UserMutationDRF(SerializerMutation):
+
+    class Meta:
+        serializer_class = UserSerializer
+        model_operations = ['create', 'update']
+        lookup_field = 'id'
+
+
 class Mutation(graphene.ObjectType):
     create_user = UserMutation.Field()
     create_user2 = UserMutation2.Field()
+    create_user_drf = UserMutationDRF.Field()
 
 
 class Query(UserQuery, TokenQuery):
