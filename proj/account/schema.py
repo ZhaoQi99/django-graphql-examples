@@ -1,8 +1,9 @@
+from django import forms
 import graphene
 from graphene_django import DjangoListField
 from graphene_django.types import DjangoObjectType
 
-from account.models import User,Token
+from account.models import Token, User
 
 
 class UserType(DjangoObjectType):
@@ -39,6 +40,23 @@ class TokenQuery(graphene.ObjectType):
 
     def resolve_token_by_value(self, info, value):
         return Token.objects.filter(token=value).first()
+
+
+class UserMutation(graphene.Mutation):
+    class Arguments:
+        user_name = graphene.String(required=True)
+        password = graphene.String(required=True)
+        email = graphene.String(required=True)
+
+    user = graphene.Field(UserType)
+
+    def mutate(self,info, user_name, password, email):
+        user = User.objects.create_user(user_name, email, password)
+        return UserMutation(user=user)
+
+
+class Mutation(graphene.ObjectType):
+    create_user = UserMutation.Field()
 
 class Query(UserQuery,TokenQuery):
     pass
